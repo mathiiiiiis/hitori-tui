@@ -12,7 +12,17 @@ you're away.
    /| |\
 ```
 
-## Setup
+## Install
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/mathiiiiiis/hitori-tui/main/install.sh | sh
+```
+
+Downloads the latest prebuilt binary for your OS/arch (Linux/macOS, amd64/arm64)
+to `~/.local/bin/hitori`. Windows users can grab the `.zip` from the
+[releases page](https://github.com/mathiiiiiis/hitori-tui/releases).
+
+## Build from source
 
 ```sh
 git clone https://github.com/mathiiiiiis/hitori-tui

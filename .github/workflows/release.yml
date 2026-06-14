@@ -1,0 +1,109 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - main.go
+
+permissions:
+  contents: write
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      should_release: ${{ steps.check.outputs.should_release }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: version
+        run: |
+          VERSION=$(grep -oP 'hitori v\K[0-9]+\.[0-9]+\.[0-9]+' main.go)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - id: check
+        run: |
+          if git ls-remote --tags origin | grep -q "refs/tags/v${{ steps.version.outputs.version }}$"; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          mkdir -p dist
+          bin=hitori
+          if [ "$GOOS" = "windows" ]; then bin=hitori.exe; fi
+          go build -ldflags="-s -w" -o "dist/$bin" .
+
+      - name: Package archive
+        run: |
+          cd dist
+          name="hitori-${{ needs.check-version.outputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            zip "$name.zip" hitori.exe
+            rm hitori.exe
+          else
+            tar -czf "$name.tar.gz" hitori
+            rm hitori
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hitori-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/*
+
+  release:
+    needs: [check-version, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum * > checksums.txt
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${{ needs.check-version.outputs.version }}"
+          gh release create "v$version" dist/* \
+            --title "v$version" \
+            --generate-notes
