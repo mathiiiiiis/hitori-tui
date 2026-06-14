@@ -20,7 +20,7 @@ func main() {
 			fmt.Println("logged out.")
 			return
 		case "version":
-			fmt.Println("hitori v0.1.0")
+			fmt.Println("hitori v0.1.1")
 			return
 		case "help", "-h", "--help":
 			printHelp()
