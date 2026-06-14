@@ -1,0 +1,15 @@
+/hitori
+hitori
+*.exe
+
+*.test
+*.out
+/dist/
+
+.env
+.env.local
+
+.vscode/
+.idea/
+*.swp
+.DS_Store
