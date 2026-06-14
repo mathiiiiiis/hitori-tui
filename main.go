@@ -5,8 +5,8 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	hauth "github.com/mathiiiiiis/hitori/internal/auth"
-	"github.com/mathiiiiiis/hitori/internal/tui"
+	hauth "github.com/mathiiiiiis/hitori-tui/internal/auth"
+	"github.com/mathiiiiiis/hitori-tui/internal/tui"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 			fmt.Println("logged out.")
 			return
 		case "version":
-			fmt.Println("hitori v0.1.1")
+			fmt.Println("hitori v0.1.2")
 			return
 		case "help", "-h", "--help":
 			printHelp()
